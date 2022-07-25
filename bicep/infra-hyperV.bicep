@@ -5,6 +5,8 @@ param nestedvirtuaVnetName string = 'vnet-hyperv'
 param nestedvirtuaVnetAddressSpace string = '10.221.0.0/24'
 param nestedvirtuaDefaultSubnet string = '10.221.0.0/24'
 param nestedvirtualStorageAccountName string = 'diagstoragenestedvirtua'
+@description('Tags for the Storage Account.')
+param tags object = {}
 
 // VMs
 param VmSize string = 'Standard_E8s_v4'
@@ -24,6 +26,7 @@ module vnet './modules/Vnet.bicep' = {
     vnetname: nestedvirtuaVnetName
     addressprefix: nestedvirtuaVnetAddressSpace
     defaultsubnetprefix: nestedvirtuaDefaultSubnet
+    tags: tags
   }
 }
 
@@ -55,9 +58,12 @@ module hyperv_vm './modules/Vm.bicep' = {
     diagnosticsStorageUri: diagnosticstorageaccount.outputs.blobUri
     licenseType: 'Windows_Server'
     datadisksize: 1024
+    tags: tags
   }
   dependsOn:[
     vnet
     diagnosticstorageaccount
   ]
 }
+
+output VirtualMachinePublicIpAddress string = hyperv_vm.outputs.VirtualMachinePublicIpAddress

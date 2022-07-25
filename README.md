@@ -25,14 +25,20 @@ It simulates an Hyper-V bare-metal server using an Azure VM that hosts an Hyper-
 
 ## Infrastructure deployment
 
+If you want to customize the deployment, you can use the `parameters.json` file to specify a location, tags and storage account name for the deployment.
+
 ```bash
 # Create a resource group
-$ az group create --location westeurope --name MyRg
-# Close repo
-$ git clone https://github.com/dawlysd/lab-azuremigrate-hyperv-nestedvirtualization
+$ az group create --location westeurope --name MyHyperVRG
+# Clone repo
+$ git clone https://github.com/chambras/lab-azuremigrate-hyperv-nestedvirtualization
 $ cd lab-azuremigrate-hyperv-nestedvirtualization/bicep
+# Dry run the deployment to verify the template
+$ az deployment group create -g MyHyperVRG -f infra-hyperV.bicep -p @parameters.json -w --verbose
 # Deploy Bicep code
-$ az deployment group create --resource-group MyRg --template-file infra-hyperV.bicep
+$ az deployment group create -g MyHyperVRG -f infra-hyperV.bicep -p @parameters.json --verbose
+# To see the output of the deployment and get the Publi IP of the Hyper-V Host VM
+$ az deployment group show -g MyHyperVRG -n infra-hyperV --query "properties.outputs" -o yaml
 ```
 
 ## Hyper-V Host installation & configuration
@@ -48,7 +54,10 @@ Connect again to the machine.
 To allow nested VMs communication, create an internal switch:
 ```powershell
 New-VMSwitch –SwitchName "NATSwitch" –SwitchType Internal
+```
 
+Sample output:
+```powershell
 Name      SwitchType NetAdapterInterfaceDescription
 ----      ---------- ------------------------------
 NATSwitch Internal     
@@ -57,7 +66,10 @@ NATSwitch Internal
 Create a new IP address and assign it to previously created switch:
 ```powershell
 New-NetIPAddress –IPAddress "192.168.0.1" -PrefixLength 24 -InterfaceAlias "vEthernet (NATSwitch)"
+```
 
+Sample output:
+```powershell
 IPAddress         : 192.168.0.1
 InterfaceIndex    : 12
 InterfaceAlias    : vEthernet (NATSwitch)
@@ -90,7 +102,9 @@ PolicyStore       : PersistentStore
 Create NAT on created switch:
 ```powershell
 New-NetNat –Name "NatNetwork" –InternalIPInterfaceAddressPrefix "192.168.0.0/24"
-
+```
+Sample output:
+```powershell
 Name                             : NatNetwork
 ExternalIPInterfaceAddressPrefix : 
 InternalIPInterfaceAddressPrefix : 192.168.0.0/24

@@ -17,6 +17,8 @@ var VmPipName = '${VmName}pip01'
 
 param adminUsername string
 param adminPassword string
+@description('Tags for the VM')
+param tags object = {}
 
 resource Pip 'Microsoft.Network/publicIPAddresses@2020-06-01' = {
   name: VmPipName
@@ -110,9 +112,11 @@ resource VirtualMachine 'Microsoft.Compute/virtualMachines@2019-07-01' = {
       ]
     }
   }
+  tags: tags
   dependsOn:[
     Nic
   ]
 }
 
 output VirtualMachineId string = VirtualMachine.id
+output VirtualMachinePublicIpAddress string = Pip.properties.ipAddress
